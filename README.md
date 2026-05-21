@@ -59,42 +59,8 @@ The design is intentionally kept at the behavioral/RTL level for clarity and por
 The design is organized as a top-level wrapper (`async_fifo`) that connects five submodules. The key structural principle is that **no combinational logic crosses clock domains** — only registered Gray code pointer values are allowed to cross, and only through dedicated synchronizer chains.
 
 ```
-                   ┌─────────────────────────────────────────────────────────────────┐
-                   │                       async_fifo (top)                          │
-                   │                                                                 │
-  ┌────────────────┼──────────────────────┐   ┌──────────────────────────────────── ┤
-  │   wclk domain  │                      │   │        rclk domain                  │
-  │                │                      │   │                                     │
-  │  ┌─────────────────────┐              │   │           ┌─────────────────────┐   │
-  │  │   wptr_generator    │              │   │           │   rptr_generator    │   │
-  │  │                     │              │   │           │                     │   │
-  │  │  bin counter →      │◄─────────────┼───┼───────────┤  bin counter →      │   │
-  │  │  Gray encode        │  gray_rptr   │   │           │  Gray encode        │   │
-  │  │                     │   _sync      │   │  gray_    │                     │   │
-  │  │  Generates: full    │              │   │  wptr     │  Generates: empty   │   │
-  │  │  bin_wptr (address) │              │   │  _sync    │  bin_rptr (address) │   │
-  │  └──────────┬──────────┘              │   │           └──────────┬──────────┘   │
-  │             │ gray_wptr               │   │                      │ gray_rptr    │
-  │             │                         │   │                      │              │
-  │             ▼                         │   │                      ▼              │
-  │  ┌─────────────────────┐              │   │           ┌─────────────────────┐   │
-  │  │      cdc_sync       │◄─────────────┼───┼───────────┤      cdc_sync       │   │
-  │  │  (gray_rptr →wclk)  │  gray_rptr   │   │ gray_wptr │  (gray_wptr →rclk)  │   │
-  │  │                     │  from rclk   │   │ from wclk │                     │   │
-  │  │  2-FF synchronizer  │  domain      │   │ domain    │  2-FF synchronizer  │   │
-  │  └─────────────────────┘              │   │           └─────────────────────┘   │
-  │                                       │   │                                     │
-  └────────────────┬──────────────────────┘   └─────────────────────┬───────────── ┘
-                   │ bin_wptr, w_en, wclk                            │ bin_rptr
-                   │                                                 │
-                   │          ┌──────────────────────┐              │
-                   └─────────►│      fifo_memory     │◄─────────────┘
-                              │                      │
-                              │  Dual-port SRAM      │
-                              │  Write: wclk sync    │──────► data_out
-                              │  Read:  async        │
-                              └──────────────────────┘
-```
+<img width="1024" height="578" alt="image" src="https://github.com/user-attachments/assets/be9f8f95-2ae7-4e2e-92f9-7fefb33ba970" />
+
 
 ### Data flow summary
 
