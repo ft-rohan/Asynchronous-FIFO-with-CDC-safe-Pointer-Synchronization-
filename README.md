@@ -21,9 +21,7 @@ A fully parameterized, synthesizable **Asynchronous FIFO** (First-In First-Out b
 7. [Design Parameters & Ports](#7-design-parameters--ports)
 8. [Testbench Methodology](#8-testbench-methodology)
 9. [Applications](#9-applications)
-10. [Project File Structure](#10-project-file-structure)
-11. [How to Simulate in Vivado](#11-how-to-simulate-in-vivado)
-12. [References](#12-references)
+10. [References](#10-references)
 
 ---
 
@@ -58,9 +56,9 @@ The design is intentionally kept at the behavioral/RTL level for clarity and por
 
 The design is organized as a top-level wrapper (`async_fifo`) that connects five submodules. The key structural principle is that **no combinational logic crosses clock domains** — only registered Gray code pointer values are allowed to cross, and only through dedicated synchronizer chains.
 
-```
-<img width="1024" height="578" alt="image" src="https://github.com/user-attachments/assets/be9f8f95-2ae7-4e2e-92f9-7fefb33ba970" />
+![Asynchronous FIFO Block Diagram](docs/block_diagrams/async_fifo_architecture.png)
 
+> **Figure 1** — Top-level architecture of the Asynchronous FIFO. The write pointer handler (wclk domain) and read pointer handler (rclk domain) exchange only Gray-coded pointers through 2-FF synchronizer chains. Binary pointers (`b_wptr`, `b_rptr`) never cross clock domains — they stay local and are used only to address the shared FIFO memory.
 
 ### Data flow summary
 
@@ -260,59 +258,13 @@ In every case, the requirements are identical to what this design addresses: saf
 
 ---
 
-## 10. Project File Structure
 
-```
-async-fifo/
-│
-├── rtl/
-│   ├── async_fifo.v          ← Top-level structural module
-│   ├── fifo_memory.v         ← Dual-port synchronous-write / async-read SRAM
-│   ├── wptr_generator.v      ← Write pointer (binary + Gray), full flag
-│   ├── rptr_generator.v      ← Read pointer (binary + Gray), empty flag
-│   └── sync_ff.v             ← Parameterized 2-FF CDC synchronizer (cdc_sync)
-│
-├── tb/
-│   └── tb.v                  ← Self-checking testbench with scoreboard
-│
-└── README.md
-```
+
 
 ---
 
-## 11. How to Simulate in Vivado
 
-### 1. Create a new project
-- Open Vivado → **Create Project** → choose **RTL Project**
-- When prompted for sources, add all five `.v` files from `rtl/` as **Design Sources**
-- Add `tb/tb.v` as a **Simulation Source**
-- Do not specify a board/part if only simulating
-
-### 2. Set the simulation top
-- In the Sources panel, right-click `tb_async_fifo` → **Set as Top** (under Simulation Sources)
-
-### 3. Run behavioral simulation
-- Flow Navigator → **Simulation** → **Run Simulation** → **Run Behavioral Simulation**
-- The Tcl console will show the `[WRITE]` / `[PASS]` / `[FAIL]` messages as the simulation runs
-
-### 4. View waveforms
-- In the waveform window, click **Add → Add Wave Group** or type in the Tcl console:
-  ```tcl
-  add_wave /tb_async_fifo/*
-  run all
-  ```
-- Use **Zoom Fit (Ctrl+Shift+F)** to see the full simulation timeline
-- Key signals to observe: `wclk`, `rclk`, `rst`, `w_en`, `r_en`, `data_in`, `data_out`, `full`, `empty`
-
-### 5. Optional — Run synthesis
-- Change the top module to `async_fifo` (Design Sources)
-- Flow Navigator → **Synthesis** → **Run Synthesis**
-- After synthesis: **Open Synthesized Design** → **Schematic** to view the gate-level netlist
-- Check **Report Utilization** and **Report Timing Summary** in the Reports panel
-
----
-
-## 12. References
+## 10. References
 
 1. **Clifford E. Cummings** — *"Simulation and Synthesis Techniques for Asynchronous FIFO Design"*, SNUG San Jose 2002.  
    The foundational paper this design is based on. Covers Gray code pointer theory, full/empty flag derivation, and synthesis guidelines in depth.  
@@ -328,11 +280,6 @@ async-fifo/
 4. **Xilinx UG906** — *Vivado Design Suite User Guide: Design Analysis and Closure Techniques*.  
    Covers `report_cdc` — Vivado's built-in CDC analysis tool that validates synchronizer placement.
 
-5. **Pong P. Chu** — *FPGA Prototyping by Verilog Examples*, Wiley, 2008.  
-   Chapter on FIFO design provides a clear pedagogical treatment of the pointer-based approach.
-
-6. **IEEE Std 1800-2012** — *SystemVerilog Hardware Description Language*.  
-   Reference for Verilog-2001 / SystemVerilog language constructs used in this design.
 
 ---
 
